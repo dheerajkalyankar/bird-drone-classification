@@ -4,7 +4,7 @@ import numpy as np
 from PIL import Image
 
 # Load model
-model = tf.keras.models.load_model("bird_drone_cnn.h5")
+model = tf.keras.models.load_model("bird_drone_cnn_tf")
 
 # Class names
 class_names = ["Bird", "Drone"]
@@ -33,4 +33,5 @@ if uploaded_file is not None:
     st.subheader("Confidence Scores:")
     for i, name in enumerate(class_names):
         st.write(f"{name}: {prediction[0][i]*100:.2f}%")
+
 
