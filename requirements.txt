@@ -2,5 +2,16 @@ tensorflow==2.20.0
 streamlit
 numpy
 Pillow
-ultralytics==8.3.23
-opencv-python-headless
+
+# Install Ultralytics without heavy extras
+ultralytics==8.1.0
+
+# Install headless OpenCV (prevents libGL issues)
+opencv-python-headless==4.8.1.78
+
+# Fix pydantic issue
+pydantic==2.7.1
+typing_extensions==4.10.0
+PyYAML==6.0.1
+
+
