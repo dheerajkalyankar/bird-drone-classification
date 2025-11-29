@@ -3,15 +3,16 @@ streamlit
 numpy
 Pillow
 
-# Install Ultralytics without heavy extras
+# YOLO + dependencies
 ultralytics==8.1.0
-
-# Install headless OpenCV (prevents libGL issues)
 opencv-python-headless==4.8.1.78
 
-# Fix pydantic issue
-pydantic==2.7.1
-typing_extensions==4.10.0
+# Pydantic fix
+pydantic==2.6.4
+pydantic-core==2.16.3
+typing_extensions==4.9.0
 PyYAML==6.0.1
+
+
 
 
