@@ -1,57 +1,72 @@
 import streamlit as st
-import tensorflow as tf
-import numpy as np
 from PIL import Image
+import numpy as np
+import cv2
+import tensorflow as tf
 from ultralytics import YOLO
 
 # -----------------------------
-# Load Both Models
+# Load models
 # -----------------------------
-clf_model = tf.keras.models.load_model("bird_drone_cnn.keras")   # Classification Model
-det_model = YOLO("best.pt")                                       # YOLO Detection Model
+@st.cache_resource
+def load_models():
+    clf_model = tf.keras.models.load_model("bird_drone_cnn.keras")  # Classification model
+    det_model = YOLO("best.pt")                                       # YOLO detection model
+    return clf_model, det_model
 
-# Class names
-class_names = ["Bird", "Drone"]
+clf_model, det_model = load_models()
 
 # -----------------------------
-# Streamlit UI
+# Preprocess function for classification
 # -----------------------------
-st.title("Bird vs Drone - Classification & Detection 🐦🚁")
+def preprocess_image(img, target_size=(224, 224)):
+    img = img.resize(target_size)
+    img = img.convert("RGB")
+    arr = np.array(img, dtype=np.float32) / 255.0
+    arr = np.expand_dims(arr, axis=0)
+    return arr
 
-mode = st.sidebar.radio("Choose Mode", ["Classification", "Detection"])
+# -----------------------------
+# YOLO detection function
+# -----------------------------
+def detect_objects(img: Image.Image):
+    img_np = np.array(img)
+    img_bgr = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
 
-uploaded_file = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
+    results = det_model(img_bgr)
 
-if uploaded_file is not None:
-    image = Image.open(uploaded_file).convert("RGB")
-    st.image(image, caption="Uploaded Image", use_column_width=True)
+    for res in results:
+        boxes = res.boxes.xyxy.cpu().numpy()
+        scores = res.boxes.conf.cpu().numpy()
+        classes = res.boxes.cls.cpu().numpy()
 
-    # -----------------------------
-    # 1️⃣ CLASSIFICATION
-    # -----------------------------
-    if mode == "Classification":
-        st.subheader("Classification Result")
+        for box, score, cls in zip(boxes, scores, classes):
+            x1, y1, x2, y2 = map(int, box)
+            label = f"{det_model.names[int(cls)]} {score:.2f}"
+            cv2.rectangle(img_bgr, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            cv2.putText(img_bgr, label, (x1, y1-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-        img = image.resize((224, 224))
-        img_array = np.array(img) / 255.0
-        img_array = np.expand_dims(img_array, axis=0)
+    img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+    return Image.fromarray(img_rgb)
 
-        prediction = clf_model.predict(img_array)
-        result = np.argmax(prediction)
+# -----------------------------
+# Streamlit interface
+# -----------------------------
+st.title("Bird vs Drone Analyzer 🐦🚁")
+task = st.radio("Choose Task:", ["Classification", "Detection"])
 
-        st.write(f"### Prediction: **{class_names[result]}**")
+uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+if uploaded_file:
+    img = Image.open(uploaded_file)
+    st.image(img, caption="Uploaded Image", width=400)
 
-        st.write("### Confidence Scores:")
-        for i, name in enumerate(class_names):
-            st.write(f"{name}: {prediction[0][i]*100:.2f}%")
+    if task == "Classification":
+        arr = preprocess_image(img)
+        pred = clf_model.predict(arr)[0][0]
+        label = "Drone" if pred >= 0.5 else "Bird"
+        st.success(f"Prediction: {label}")
+        st.info(f"Confidence: {pred*100:.2f}%")
 
-    # -----------------------------
-    # 2️⃣ DETECTION
-    # -----------------------------
-    if mode == "Detection":
-        st.subheader("YOLO Detection Result")
-
-        results = det_model(image)
-        result_img = results[0].plot()  # draw bounding boxes
-
-        st.image(result_img, caption="Detected Image", use_column_width=True)
+    else:
+        detected_img = detect_objects(img)
+        st.image(detected_img, caption="Detected Objects", width=500)
