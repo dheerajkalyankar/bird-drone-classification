@@ -2,16 +2,14 @@ tensorflow==2.20.0
 streamlit
 numpy
 Pillow
-
-# YOLO + dependencies
 ultralytics==8.1.0
 opencv-python-headless==4.8.1.78
-
-# Pydantic fix
 pydantic==2.6.4
 pydantic-core==2.16.3
 typing_extensions==4.9.0
 PyYAML==6.0.1
+
+
 
 
 
