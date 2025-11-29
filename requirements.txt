@@ -1,16 +1,23 @@
-tensorflow==2.20.0
-streamlit
-numpy
-Pillow
-ultralytics==8.1.0
-opencv-python-headless==4.8.1.78
-pydantic==2.6.4
-pydantic-core==2.16.3
-typing_extensions==4.9.0
-PyYAML==6.0.1
+# Streamlit core
+streamlit>=1.51.0
 
+# TensorFlow / Keras (classification)
+tensorflow>=2.20.0
+keras>=3.12.0
 
+# PyTorch / YOLO (detection)
+torch>=2.9.1
+torchvision>=0.24.1
+ultralytics>=8.3.230
+ultralytics-thop>=2.0.18
 
+# Image processing
+numpy>=1.26
+opencv-python-headless>=4.7.0
+pillow>=11.3.0
 
-
-
+# Utilities
+pydantic>=2.6.4
+pydantic-core>=2.16.3
+typing_extensions>=4.9.0
+PyYAML>=6.0.1
