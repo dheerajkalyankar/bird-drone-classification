@@ -1,8 +1,6 @@
+ultralytics==8.3.23
+opencv-python
 tensorflow==2.20.0
 streamlit
 numpy
 Pillow
-
-
-
-
