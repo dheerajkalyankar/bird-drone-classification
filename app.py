@@ -11,7 +11,7 @@ from ultralytics import YOLO
 @st.cache_resource
 def load_models():
     clf_model = tf.keras.models.load_model("bird_drone_cnn.keras")  # Classification model
-    det_model = YOLO("best.pt")                                       # YOLO detection model
+    det_model = YOLO("best.pt")                                     # YOLO detection model
     return clf_model, det_model
 
 clf_model, det_model = load_models()
@@ -44,7 +44,15 @@ def detect_objects(img: Image.Image):
             x1, y1, x2, y2 = map(int, box)
             label = f"{det_model.names[int(cls)]} {score:.2f}"
             cv2.rectangle(img_bgr, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            cv2.putText(img_bgr, label, (x1, y1-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            cv2.putText(
+                img_bgr,
+                label,
+                (x1, y1 - 10),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                (0, 255, 0),
+                2
+            )
 
     img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
     return Image.fromarray(img_rgb)
@@ -53,19 +61,33 @@ def detect_objects(img: Image.Image):
 # Streamlit interface
 # -----------------------------
 st.title("Bird vs Drone Analyzer 🐦🚁")
+
 task = st.radio("Choose Task:", ["Classification", "Detection"])
 
-uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
-if uploaded_file:
+uploaded_file = st.file_uploader(
+    "Upload an image",
+    type=["jpg", "jpeg", "png"]
+)
+
+if uploaded_file is not None:
     img = Image.open(uploaded_file)
     st.image(img, caption="Uploaded Image", width=400)
 
     if task == "Classification":
         arr = preprocess_image(img)
         pred = clf_model.predict(arr)[0][0]
-        label = "Drone" if pred >= 0.5 else "Bird"
+
+        # 🔴 FIXED LABEL MAPPING
+        # Model was trained as: 0 = Drone, 1 = Bird
+        if pred >= 0.5:
+            label = "Bird"
+            confidence = pred
+        else:
+            label = "Drone"
+            confidence = 1 - pred
+
         st.success(f"Prediction: {label}")
-        st.info(f"Confidence: {pred*100:.2f}%")
+        st.info(f"Confidence: {confidence * 100:.2f}%")
 
     else:
         detected_img = detect_objects(img)
